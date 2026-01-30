@@ -1,47 +1,62 @@
-import React, { useState, useEffect } from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect, useMemo, useState } from "react";
+import "./App.css";
+import DashboardShell from "./components/DashboardShell";
+import HomeView from "./views/HomeView";
+import ChatAssistantView from "./views/ChatAssistantView";
+import ModulesView from "./views/ModulesView";
+import ProgressView from "./views/ProgressView";
+import AnnouncementsView from "./views/AnnouncementsView";
+import SettingsView from "./views/SettingsView";
+import { ensureBackendHealth, getProfile } from "./api/client";
+import { isFlagEnabled } from "./api/config";
+
+function navTitle(nav) {
+  if (nav === "home") return "Home";
+  if (nav === "chat") return "Chat Assistant";
+  if (nav === "modules") return "Modules";
+  if (nav === "progress") return "Progress";
+  if (nav === "announcements") return "Announcements";
+  return "Settings";
+}
 
 // PUBLIC_INTERFACE
 function App() {
-  const [theme, setTheme] = useState('light');
+  const [activeNav, setActiveNav] = useState("chat");
+  const [search, setSearch] = useState("");
+  const [profile, setProfile] = useState(null);
+  const [mode, setMode] = useState({ healthy: false, mockMode: true });
 
-  // Effect to apply theme to document element
+  const announcementsEnabled = useMemo(() => isFlagEnabled("announcements", true), []);
+
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
+    ensureBackendHealth().then(setMode).catch(() => setMode({ healthy: false, mockMode: true }));
+    getProfile().then(setProfile).catch(() => setProfile(null));
+  }, []);
 
-  // PUBLIC_INTERFACE
-  const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
-  };
+  // If announcements are disabled but user is on that view, bump to chat.
+  useEffect(() => {
+    if (!announcementsEnabled && activeNav === "announcements") setActiveNav("chat");
+  }, [announcementsEnabled, activeNav]);
+
+  const title = `${navTitle(activeNav)}${mode.mockMode ? " • Mock mode" : ""}`;
 
   return (
     <div className="App">
-      <header className="App-header">
-        <button 
-          className="theme-toggle" 
-          onClick={toggleTheme}
-          aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-        >
-          {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
-        </button>
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <p>
-          Current theme: <strong>{theme}</strong>
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <DashboardShell
+        activeNav={activeNav}
+        onNavigate={setActiveNav}
+        title={title}
+        user={profile}
+        searchValue={search}
+        onSearchChange={setSearch}
+      >
+        {activeNav === "home" && <HomeView />}
+        {activeNav === "chat" && <ChatAssistantView />}
+        {activeNav === "modules" && <ModulesView />}
+        {activeNav === "progress" && <ProgressView />}
+        {activeNav === "announcements" && announcementsEnabled && <AnnouncementsView />}
+        {activeNav === "settings" && <SettingsView />}
+      </DashboardShell>
     </div>
   );
 }

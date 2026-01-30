@@ -1,82 +1,74 @@
-# Lightweight React Template for KAVIA
+# Employee Onboarding Frontend (React)
 
-This project provides a minimal React template with a clean, modern UI and minimal dependencies.
+Minimalist “Ocean Professional” dashboard UI for the AI-driven employee onboarding assistant.
 
-## Features
+## Run locally
 
-- **Lightweight**: No heavy UI frameworks - uses only vanilla CSS and React
-- **Modern UI**: Clean, responsive design with KAVIA brand styling
-- **Fast**: Minimal dependencies for quick loading times
-- **Simple**: Easy to understand and modify
+From this directory:
 
-## Getting Started
-
-In the project directory, you can run:
-
-### `npm start`
-
-Runs the app in development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
-
-### `npm test`
-
-Launches the test runner in interactive watch mode.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-## Customization
-
-### Colors
-
-The main brand colors are defined as CSS variables in `src/App.css`:
-
-```css
-:root {
-  --kavia-orange: #E87A41;
-  --kavia-dark: #1A1A1A;
-  --text-color: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.7);
-  --border-color: rgba(255, 255, 255, 0.1);
-}
+```bash
+npm install
+npm start
 ```
 
-### Components
+App runs on port **3000** (Create React App).
 
-This template uses pure HTML/CSS components instead of a UI framework. You can find component styles in `src/App.css`. 
+## Environment variables
 
-Common components include:
-- Buttons (`.btn`, `.btn-large`)
-- Container (`.container`)
-- Navigation (`.navbar`)
-- Typography (`.title`, `.subtitle`, `.description`)
+This app uses CRA-style environment variables (must be prefixed with `REACT_APP_`). Configure them in the container’s `.env` (already managed by the system).
 
-## Learn More
+### Backend URLs
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+- `REACT_APP_API_BASE` (preferred)  
+  Base URL for REST requests. Example: `http://localhost:8000`
+- `REACT_APP_BACKEND_URL` (fallback if API_BASE is not set)  
+  Base URL for REST requests.
+- `REACT_APP_HEALTHCHECK_PATH` (optional, default `/healthz`)  
+  Used to detect whether backend is available.
 
-### Code Splitting
+### WebSocket (optional)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+- `REACT_APP_WS_URL` (optional)  
+  Base WS URL (e.g., `ws://localhost:8000/ws/chat` or `ws://localhost:8000/ws` depending on backend).
 
-### Analyzing the Bundle Size
+WS is only used when the `wsChat` feature flag is enabled.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### Feature flags / experiments
 
-### Making a Progressive Web App
+- `REACT_APP_FEATURE_FLAGS` (JSON string)  
+  Example:
+  ```json
+  {"announcements": true, "wsChat": false}
+  ```
+- `REACT_APP_EXPERIMENTS_ENABLED` (JSON string / boolean-like)  
+  Examples: `"true"`, `"false"`, `{"enabled": true}`
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## API endpoints used
 
-### Advanced Configuration
+The frontend calls these REST endpoints:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+- `GET /api/profile`
+- `GET /api/modules`
+- `GET /api/progress`
+- `GET /api/tasks`
+- `GET /api/announcements`
+- `GET /api/chat` (history)
+- `POST /api/chat` with body `{ "message": "..." }`
 
-### Deployment
+## Mock mode (graceful fallback)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+If the backend is unavailable, the app automatically enters **Mock mode**:
 
-### `npm run build` fails to minify
+1. The client calls `GET {API_BASE}{HEALTHCHECK_PATH}` (default `/healthz`) once.
+2. If the request fails, the API client returns sample data for:
+   - profile, modules, progress, tasks, announcements
+3. Chat uses an **echo + guidance** behavior in mock mode.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+The current mode is shown in the top bar (e.g., `Chat Assistant • Mock mode`) and in Settings.
+
+## UI structure
+
+- Left sidebar navigation: Home, Chat Assistant, Modules, Progress, Announcements (flagged), Settings
+- Top bar: title, search field (UI-only), avatar placeholder
+- Main content: view-specific panels (Chat is default)
+"""
